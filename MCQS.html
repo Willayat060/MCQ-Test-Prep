@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive MCQ Practice App</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Configure Tailwind CSS to use class-based dark mode
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <!-- pdf.js for PDF parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
     <!-- mammoth.js for DOCX parsing -->
@@ -40,77 +46,105 @@
         #app-container {
             min-height: 100vh;
         }
+        
+        /* For the new question navigation panel */
+        #question-nav-panel::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        #question-nav-panel::-webkit-scrollbar-thumb {
+            background-color: #9CA3AF;
+            border-radius: 20px;
+        }
 
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
 
-    <div id="app-container" class="container mx-auto p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-center">
+    <div id="app-container" class="relative container mx-auto p-4 sm:p-6 lg:p-8 flex flex-col items-center justify-center">
+        <!-- Theme Toggle Switch -->
+        <div class="absolute top-4 right-4 sm:top-6 sm:right-6">
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-100 dark:focus:ring-offset-gray-900">
+                <svg id="theme-icon-sun" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <svg id="theme-icon-moon" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
 
         <!-- Upload View -->
         <div id="upload-view" class="w-full max-w-2xl text-center">
-            <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-                <h1 class="text-3xl sm:text-4xl font-bold mb-2 text-gray-900">MCQ Practice App</h1>
-                <p class="text-gray-600 mb-6">Upload your PDF, DOCX, or TXT file to start your quiz.</p>
-                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 sm:p-12 cursor-pointer hover:border-blue-500 hover:bg-gray-50 transition-colors" id="drop-zone">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+                <h1 class="text-3xl sm:text-4xl font-bold mb-2 text-gray-900 dark:text-white">MCQ Practice App</h1>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Upload your PDF, DOCX, or TXT file to start your quiz.</p>
+                <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 sm:p-12 cursor-pointer hover:border-blue-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" id="drop-zone">
                     <input type="file" id="file-input" class="hidden" accept=".pdf,.docx,.txt">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
                         <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                    <p class="mt-4 text-sm text-gray-500"><span class="font-semibold text-blue-600">Click to upload</span> or drag and drop</p>
-                    <p class="text-xs text-gray-500 mt-1">PDF, DOCX, or TXT files</p>
+                    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400"><span class="font-semibold text-blue-600 dark:text-blue-400">Click to upload</span> or drag and drop</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-500 mt-1">PDF, DOCX, or TXT files</p>
                 </div>
-                <div id="file-name" class="mt-4 text-sm text-gray-700 font-medium"></div>
-                <button id="start-quiz-btn" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Start Quiz</button>
+                <div id="file-name" class="mt-4 text-sm text-gray-700 dark:text-gray-300 font-medium"></div>
+                <button id="start-quiz-btn" class="mt-6 w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105 disabled:bg-gray-400 dark:disabled:bg-gray-600 disabled:cursor-not-allowed" disabled>Start Quiz</button>
                  <div id="loading-spinner" class="hidden mt-4">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                    <p class="text-gray-600 mt-2">Parsing your file...</p>
+                    <p class="text-gray-600 dark:text-gray-400 mt-2">Parsing your file...</p>
                 </div>
                  <div id="error-message" class="mt-4 text-red-500 text-sm font-medium"></div>
             </div>
         </div>
 
         <!-- Quiz View -->
-        <div id="quiz-view" class="hidden w-full max-w-3xl">
-            <div class="flex justify-between items-center mb-4">
-                 <h2 class="text-2xl font-bold text-gray-900">Quiz Time!</h2>
-                 <div id="progress-tracker" class="text-right font-semibold text-gray-700 bg-white px-4 py-2 rounded-lg shadow-sm border">
-                    Score: <span id="score">0</span> / <span id="total-questions">0</span>
-                 </div>
-            </div>
-
-            <div id="question-card" class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200">
-                <p class="text-sm font-semibold text-blue-600 mb-2" id="question-number">Question X of Y</p>
-                <p class="text-lg sm:text-xl font-medium text-gray-800 mb-6" id="question-text"></p>
-                <div id="options-container" class="space-y-3">
-                    <!-- Options will be dynamically inserted here -->
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-between items-center">
-                <button id="prev-btn" class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 transition-colors">Previous</button>
-                <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Next</button>
-            </div>
-        </div>
-
-        <!-- Results View -->
-        <div id="results-view" class="hidden w-full max-w-2xl text-center">
-             <div class="bg-white p-8 rounded-2xl shadow-lg border border-gray-200">
-                <h2 class="text-3xl font-bold mb-2 text-gray-900">Quiz Complete!</h2>
-                <p class="text-lg text-gray-600 mb-6">Here's how you did:</p>
-
-                <div class="text-6xl font-extrabold text-blue-600 mb-4" id="final-score"></div>
-                <p class="text-gray-700 font-medium mb-8" id="score-percentage"></p>
-
-                <div id="review-container" class="text-left mt-6">
-                    <h3 class="text-xl font-bold mb-4 text-gray-800">Review Your Answers</h3>
-                    <div id="review-list" class="space-y-4 max-h-64 overflow-y-auto pr-2">
-                        <!-- Incorrect answers will be listed here -->
+        <div id="quiz-view" class="hidden w-full max-w-6xl">
+            <div class="flex flex-col md:flex-row md:space-x-8">
+                <!-- Question Navigation Panel (Left/Top) -->
+                <div class="w-full md:w-48 mb-6 md:mb-0 flex-shrink-0">
+                    <h3 class="text-lg font-bold mb-3 text-gray-800 dark:text-gray-200">Questions</h3>
+                    <div id="question-nav-panel" class="grid grid-cols-5 sm:grid-cols-7 md:grid-cols-4 gap-2 md:max-h-[60vh] md:overflow-y-auto pr-2">
+                        <!-- Navigation buttons will be injected here -->
                     </div>
                 </div>
 
-                <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <button id="download-results-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105">Download Results</button>
+                <!-- Main Quiz Content (Right/Bottom) -->
+                <div class="w-full">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white" id="quiz-round-title">Quiz Time!</h2>
+                        <div id="progress-tracker" class="text-right font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                            Score: <span id="score">0</span> / <span id="total-questions">0</span>
+                        </div>
+                    </div>
+
+                    <div id="question-card" class="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+                        <p class="text-sm font-semibold text-blue-600 dark:text-blue-400 mb-2" id="question-number">Question X of Y</p>
+                        <p class="text-lg sm:text-xl font-medium text-gray-800 dark:text-gray-100 mb-6" id="question-text"></p>
+                        <div id="options-container" class="space-y-3">
+                            <!-- Options will be dynamically inserted here -->
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-between items-center">
+                        <button id="prev-btn" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-bold py-2 px-6 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">Previous</button>
+                        <button id="next-btn" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Results View -->
+        <div id="results-view" class="hidden w-full max-w-2xl text-center">
+             <div class="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700">
+                <h2 class="text-3xl font-bold mb-2 text-gray-900 dark:text-white">Quiz Complete!</h2>
+                <p class="text-lg text-gray-600 dark:text-gray-400 mb-6">Congratulations! You've answered all questions correctly.</p>
+
+                <div class="text-6xl font-extrabold text-blue-600 dark:text-blue-400 mb-4" id="final-score"></div>
+                <p class="text-gray-700 dark:text-gray-300 font-medium mb-8" id="score-percentage"></p>
+                
+                 <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button id="download-results-btn" class="w-full bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-all transform hover:scale-105">Download Summary</button>
                     <button id="restart-quiz-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all transform hover:scale-105">Take Another Quiz</button>
                 </div>
             </div>
@@ -123,13 +157,15 @@
             // Set up pdf.js worker
             pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js`;
 
-            // State
-            let questions = [];
-            let currentQuestionIndex = 0;
-            let userAnswers = {}; // { questionIndex: { selectedOption: string, isCorrect: boolean } }
+            // --- State Management ---
+            let questions = []; // Master list of all questions
+            let currentQuizSetIndices = []; // Array of indices for the current round (all questions, or just incorrect ones)
+            let currentPointer = 0; // Points to an index within currentQuizSetIndices
+            let userAnswers = {}; // { originalQuestionIndex: { selectedOption: string, isCorrect: boolean } }
             let score = 0;
+            let round = 1;
 
-            // UI Elements
+            // --- UI Elements ---
             const uploadView = document.getElementById('upload-view');
             const quizView = document.getElementById('quiz-view');
             const resultsView = document.getElementById('results-view');
@@ -141,6 +177,8 @@
             const loadingSpinner = document.getElementById('loading-spinner');
             const errorMessage = document.getElementById('error-message');
 
+            const quizRoundTitle = document.getElementById('quiz-round-title');
+            const questionNavPanel = document.getElementById('question-nav-panel');
             const questionText = document.getElementById('question-text');
             const optionsContainer = document.getElementById('options-container');
             const questionNumber = document.getElementById('question-number');
@@ -151,37 +189,52 @@
             
             const finalScoreDisplay = document.getElementById('final-score');
             const scorePercentageDisplay = document.getElementById('score-percentage');
-            const reviewList = document.getElementById('review-list');
-            const restartQuizBtn = document.getElementById('restart-quiz-btn');
             const downloadResultsBtn = document.getElementById('download-results-btn');
+            const restartQuizBtn = document.getElementById('restart-quiz-btn');
+
+            // --- Theme Switcher Logic ---
+            const themeToggle = document.getElementById('theme-toggle');
+            const sunIcon = document.getElementById('theme-icon-sun');
+            const moonIcon = document.getElementById('theme-icon-moon');
+            
+            const userTheme = localStorage.getItem('theme');
+            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    sunIcon.classList.remove('hidden');
+                    moonIcon.classList.add('hidden');
+                }
+            };
+            
+            if ((userTheme === 'dark') || (!userTheme && systemTheme)) {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
+
+            themeToggle.addEventListener('click', () => {
+                const isDark = document.documentElement.classList.contains('dark');
+                localStorage.setItem('theme', isDark ? 'light' : 'dark');
+                applyTheme(isDark ? 'light' : 'dark');
+            });
+
 
             // --- File Upload Logic ---
             dropZone.addEventListener('click', () => fileInput.click());
-
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('border-blue-500', 'bg-gray-50');
-            });
-
-            dropZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('border-blue-500', 'bg-gray-50');
-            });
-            
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-500', 'bg-gray-50', 'dark:bg-gray-700'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-blue-500', 'bg-gray-50', 'dark:bg-gray-700'); });
             dropZone.addEventListener('drop', (e) => {
                 e.preventDefault();
-                dropZone.classList.remove('border-blue-500', 'bg-gray-50');
-                const files = e.dataTransfer.files;
-                if (files.length) {
-                    handleFile(files[0]);
-                }
+                dropZone.classList.remove('border-blue-500', 'bg-gray-50', 'dark:bg-gray-700');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
             });
-
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length) {
-                    handleFile(e.target.files[0]);
-                }
-            });
+            fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
             
             function handleFile(file) {
                 if(file) {
@@ -193,23 +246,15 @@
 
             startQuizBtn.addEventListener('click', async () => {
                 const file = fileInput.files[0];
-                if (!file) {
-                    showError("Please select a file first.");
-                    return;
-                }
-
+                if (!file) { showError("Please select a file first."); return; }
                 loadingSpinner.classList.remove('hidden');
                 startQuizBtn.disabled = true;
                 errorMessage.textContent = '';
-
                 try {
                     const textContent = await parseFile(file);
                     questions = parseMCQs(textContent);
-                    if (questions.length === 0) {
-                        throw new Error("Could not find any questions. Check file formatting.");
-                    }
-                    resetQuizState();
-                    displayQuestion(currentQuestionIndex);
+                    if (questions.length === 0) throw new Error("Could not find any questions. Check file formatting.");
+                    startNewQuiz();
                     switchToView('quiz');
                 } catch (error) {
                     console.error("Parsing Error:", error);
@@ -223,7 +268,6 @@
             async function parseFile(file) {
                 const extension = file.name.split('.').pop().toLowerCase();
                 const reader = new FileReader();
-
                 return new Promise((resolve, reject) => {
                     reader.onload = async (event) => {
                         try {
@@ -236,187 +280,191 @@
                                 for (let i = 1; i <= pdf.numPages; i++) {
                                     const page = await pdf.getPage(i);
                                     const textContent = await page.getTextContent();
-                                    // Join text items with a space, and pages with a newline.
-                                    // This helps preserve some structure.
                                     const pageText = textContent.items.map(item => item.str).join(' ');
                                     fullText += pageText + '\n';
                                 }
                                 resolve(fullText);
                             } else if (extension === 'docx') {
-                                const arrayBuffer = event.target.result;
-                                const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+                                const result = await mammoth.extractRawText({ arrayBuffer: event.target.result });
                                 resolve(result.value);
-                            } else {
-                                reject('Unsupported file type.');
-                            }
+                            } else { reject('Unsupported file type.'); }
                         } catch (err) {
                             console.error("File parsing error:", err);
-                            reject(new Error("There was an error processing the file. Ensure it is not corrupted."));
+                            reject(new Error("There was an error processing the file."));
                         }
                     };
-
                     reader.onerror = (error) => reject(error);
-
-                    if (extension === 'txt') {
-                        reader.readAsText(file);
-                    } else if (extension === 'pdf' || extension === 'docx') {
-                        reader.readAsArrayBuffer(file);
-                    }
+                    if (extension === 'txt') reader.readAsText(file);
+                    else if (extension === 'pdf' || extension === 'docx') reader.readAsArrayBuffer(file);
                 });
             }
 
             function parseMCQs(text) {
-                // Normalize line endings and extra spaces that can come from PDF parsing
-                text = text.replace(/\r\n/g, '\n');
-                text = text.replace(/ +/g, ' '); // Consolidate multiple spaces into one
-
-                // Regex to find the answer key section, capturing everything after the header
+                text = text.replace(/\r\n/g, '\n').replace(/ +/g, ' ');
                 const answerKeyRegex = /(?:Answer Key|ANSWERS|ANSWER KEY)[\s:.-]*([\s\S]*)/i;
                 const answerKeyMatch = text.match(answerKeyRegex);
-
-                if (!answerKeyMatch) {
-                    throw new Error("Answer key section not found. Please ensure it starts with 'Answer Key' or 'ANSWERS'.");
-                }
-
+                if (!answerKeyMatch) throw new Error("Answer key section not found.");
                 const answerKeyText = answerKeyMatch[1];
                 const answers = {};
-                // More robust regex for answers, allowing for more space and different separators
                 const answerRegex = /(\d+)\s*[.)-]?\s*([A-Da-d])/g;
                 let match;
-                while ((match = answerRegex.exec(answerKeyText)) !== null) {
-                    answers[match[1]] = match[2].toUpperCase();
-                }
+                while ((match = answerRegex.exec(answerKeyText)) !== null) answers[match[1]] = match[2].toUpperCase();
+                if (Object.keys(answers).length === 0) throw new Error("No answers found in the answer key.");
 
-                if (Object.keys(answers).length === 0) {
-                     throw new Error("No answers found in the answer key. Please check formatting (e.g., '1. A', '2. B').");
-                }
-
-                // Get the text content before the answer key
                 const questionsText = text.substring(0, answerKeyMatch.index).trim();
                 const parsedQuestions = [];
-
-                // This regex finds each question block, from its number to the start of the next one or the end of the text.
-                // It's not dependent on newlines between questions.
                 const questionBlockRegex = /(\d+)\.\s+([\s\S]*?)(?=\s*\d+\.\s+|$)/g;
-    
                 while ((match = questionBlockRegex.exec(questionsText)) !== null) {
                     const questionNumber = match[1];
                     let blockContent = match[2].trim();
-
-                    // Find the question text by splitting the block at the first option identifier (e.g., ' A.', ' B) ').
                     const firstOptionRegex = /\s+[A-Da-d][.)]/;
                     const firstOptionMatch = blockContent.match(firstOptionRegex);
-
-                    if (!firstOptionMatch) continue; // Skip this block if no options are found
-
+                    if (!firstOptionMatch) continue;
                     const questionContent = blockContent.substring(0, firstOptionMatch.index).trim();
                     const optionsText = blockContent.substring(firstOptionMatch.index).trim();
-                    
                     const options = [];
-                    // This regex finds each individual option within the options text.
                     const singleOptionRegex = /([A-Da-d])[.)]\s+([\s\S]*?)(?=\s+[A-Da-d][.)]|$)/g;
-
                     let optionMatch;
                     while ((optionMatch = singleOptionRegex.exec(optionsText)) !== null) {
-                        options.push({
-                            letter: optionMatch[1].toUpperCase(),
-                            text: optionMatch[2].trim()
-                        });
+                        options.push({ letter: optionMatch[1].toUpperCase(), text: optionMatch[2].trim() });
                     }
-                    
                     if (questionContent && options.length >= 2 && answers[questionNumber]) {
-                         parsedQuestions.push({
-                            number: questionNumber,
-                            text: questionContent,
-                            options: options,
-                            correctAnswer: answers[questionNumber]
-                        });
+                        parsedQuestions.push({ number: questionNumber, text: questionContent, options: options, correctAnswer: answers[questionNumber] });
                     }
                 }
-                
                 return parsedQuestions;
             }
 
             // --- Quiz Logic ---
             
-            function displayQuestion(index) {
-                if (index < 0 || index >= questions.length) return;
+            function startNewQuiz() {
+                resetQuizState();
+                currentQuizSetIndices = questions.map((_, i) => i); // Start with all questions
+                displayQuestion(currentQuizSetIndices[currentPointer]);
+                renderNavigationPanel();
+            }
 
-                const question = questions[index];
+            function displayQuestion(originalIndex) {
+                if (originalIndex === undefined) return;
+
+                const question = questions[originalIndex];
                 questionText.textContent = question.text;
-                questionNumber.textContent = `Question ${index + 1} of ${questions.length}`;
+                questionNumber.textContent = `Question ${question.number}`;
                 optionsContainer.innerHTML = '';
 
                 question.options.forEach(option => {
                     const button = document.createElement('button');
-                    button.className = 'option-btn w-full text-left p-4 border-2 border-gray-300 rounded-lg hover:bg-gray-100 hover:border-blue-400';
+                    button.className = 'option-btn w-full text-left p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-blue-400 dark:hover:border-blue-500';
                     button.innerHTML = `<span class="font-bold mr-2">${option.letter}.</span> ${option.text}`;
                     button.dataset.letter = option.letter;
-
-                    button.addEventListener('click', () => handleOptionSelect(index, option.letter, button));
+                    button.addEventListener('click', () => handleOptionSelect(originalIndex, option.letter, button));
                     optionsContainer.appendChild(button);
                 });
 
-                // Restore previous state if exists
-                if(userAnswers[index]){
-                    const { selectedOption, isCorrect } = userAnswers[index];
-                    const allOptions = optionsContainer.querySelectorAll('.option-btn');
-                    allOptions.forEach(btn => {
-                        if (btn.dataset.letter === selectedOption) {
-                            btn.classList.add(isCorrect ? 'correct' : 'incorrect', 'selected');
-                        }
-                        if (!isCorrect && btn.dataset.letter === question.correctAnswer) {
-                            btn.classList.add('correct-answer-reveal');
-                        }
-                        btn.disabled = true; // Disable all options once an answer for this question is recorded
+                if(userAnswers[originalIndex]){
+                    const { selectedOption, isCorrect } = userAnswers[originalIndex];
+                    optionsContainer.querySelectorAll('.option-btn').forEach(btn => {
+                        if (btn.dataset.letter === selectedOption) btn.classList.add(isCorrect ? 'correct' : 'incorrect', 'selected');
+                        if (!isCorrect && btn.dataset.letter === question.correctAnswer) btn.classList.add('correct-answer-reveal');
+                        btn.disabled = true;
                     });
                 }
                 
                 updateNavigation();
                 updateProgress();
+                renderNavigationPanel();
             }
 
-            function handleOptionSelect(index, selectedLetter, button) {
-                if (userAnswers[index]) return; // Already answered
+            function handleOptionSelect(originalIndex, selectedLetter) {
+                if (userAnswers[originalIndex]) return; // Already answered this round
 
-                const question = questions[index];
+                const question = questions[originalIndex];
                 const isCorrect = selectedLetter === question.correctAnswer;
                 
-                userAnswers[index] = { selectedOption: selectedLetter, isCorrect };
+                userAnswers[originalIndex] = { selectedOption: selectedLetter, isCorrect };
                 
-                if (isCorrect) {
-                    score++;
-                    button.classList.add('correct');
-                } else {
-                    button.classList.add('incorrect');
-                    const correctOptionButton = optionsContainer.querySelector(`[data-letter="${question.correctAnswer}"]`);
-                    if(correctOptionButton) {
-                       correctOptionButton.classList.add('correct-answer-reveal');
-                    }
-                }
-                button.classList.add('selected');
-
-                // Disable all buttons for this question
-                const allOptions = optionsContainer.querySelectorAll('.option-btn');
-                allOptions.forEach(btn => btn.disabled = true);
-
-                updateProgress();
+                if (isCorrect) score++;
+                
+                displayQuestion(originalIndex); // Re-render to show feedback
 
                 // Auto-advance to next question after a short delay
                 setTimeout(() => {
-                    if (currentQuestionIndex < questions.length - 1) {
-                         currentQuestionIndex++;
-                         displayQuestion(currentQuestionIndex);
+                    if (currentPointer < currentQuizSetIndices.length - 1) {
+                        currentPointer++;
+                        displayQuestion(currentQuizSetIndices[currentPointer]);
                     } else {
-                        showResults();
+                        // User has reached the end of the current round
+                        finishRound();
                     }
                 }, 1200);
             }
+
+             function finishRound() {
+                const incorrectQuestionIndices = questions
+                    .map((_, i) => i)
+                    .filter(i => !userAnswers[i] || !userAnswers[i].isCorrect);
+                
+                if (incorrectQuestionIndices.length === 0) {
+                    showResults();
+                } else {
+                    round++;
+                    quizRoundTitle.textContent = `Round ${round}: Retry Incorrect`;
+
+                    // Clear the previous incorrect answers to allow re-answering.
+                    incorrectQuestionIndices.forEach(index => {
+                        delete userAnswers[index];
+                    });
+
+                    currentQuizSetIndices = incorrectQuestionIndices;
+                    currentPointer = 0;
+                    displayQuestion(currentQuizSetIndices[currentPointer]);
+                    renderNavigationPanel();
+                }
+            }
             
+            function renderNavigationPanel() {
+                questionNavPanel.innerHTML = '';
+                questions.forEach((q, index) => {
+                    const navBtn = document.createElement('button');
+                    const status = userAnswers[index];
+                    let bgColor = 'bg-white dark:bg-gray-700';
+                    let textColor = 'text-gray-700 dark:text-gray-200';
+                    let borderColor = 'border-gray-300 dark:border-gray-600';
+
+                    if (status) {
+                        if (status.isCorrect) {
+                            bgColor = 'bg-green-500';
+                            textColor = 'text-white';
+                            borderColor = 'border-green-600 dark:border-green-500';
+                        } else {
+                            bgColor = 'bg-red-500';
+                            textColor = 'text-white';
+                            borderColor = 'border-red-600 dark:border-red-500';
+                        }
+                    }
+                    
+                    if (index === currentQuizSetIndices[currentPointer]) {
+                        borderColor = 'border-blue-500 ring-2 ring-blue-500';
+                    }
+
+                    navBtn.className = `w-10 h-10 rounded-md font-bold flex items-center justify-center border-2 transition-colors ${bgColor} ${textColor} ${borderColor}`;
+                    navBtn.textContent = q.number;
+                    navBtn.addEventListener('click', () => {
+                        // Find the question in the current round, or jump to it if not in round
+                         const pointerIndex = currentQuizSetIndices.indexOf(index);
+                         if (pointerIndex > -1) {
+                            currentPointer = pointerIndex;
+                            displayQuestion(index);
+                         }
+                    });
+                    questionNavPanel.appendChild(navBtn);
+                });
+            }
+
             function updateNavigation() {
-                prevBtn.disabled = currentQuestionIndex === 0;
-                if (currentQuestionIndex === questions.length - 1) {
-                    nextBtn.textContent = 'Finish';
+                prevBtn.disabled = currentPointer === 0;
+                if (currentPointer === currentQuizSetIndices.length - 1) {
+                    nextBtn.textContent = 'Finish Round';
                 } else {
                     nextBtn.textContent = 'Next';
                 }
@@ -428,109 +476,65 @@
             }
             
             prevBtn.addEventListener('click', () => {
-                if (currentQuestionIndex > 0) {
-                    currentQuestionIndex--;
-                    displayQuestion(currentQuestionIndex);
+                if (currentPointer > 0) {
+                    currentPointer--;
+                    displayQuestion(currentQuizSetIndices[currentPointer]);
                 }
             });
 
             nextBtn.addEventListener('click', () => {
-                if (currentQuestionIndex < questions.length - 1) {
-                    currentQuestionIndex++;
-                    displayQuestion(currentQuestionIndex);
+                if (currentPointer < currentQuizSetIndices.length - 1) {
+                    currentPointer++;
+                    displayQuestion(currentQuizSetIndices[currentPointer]);
                 } else {
-                    showResults();
+                    finishRound();
                 }
             });
 
             // --- Results Logic ---
-
             function showResults() {
-                const total = questions.length;
-                const percentage = total > 0 ? ((score / total) * 100).toFixed(0) : 0;
-
-                finalScoreDisplay.textContent = `${score} / ${total}`;
-                scorePercentageDisplay.textContent = `You scored ${percentage}%`;
-
-                reviewList.innerHTML = '';
-                questions.forEach((q, index) => {
-                    const userAnswer = userAnswers[index];
-                    if (!userAnswer || !userAnswer.isCorrect) {
-                        const div = document.createElement('div');
-                        div.className = 'p-3 bg-gray-50 rounded-lg border';
-                        const yourAnswerText = userAnswer ? q.options.find(opt => opt.letter === userAnswer.selectedOption).text : 'Not answered';
-                        const correctAnswerText = q.options.find(opt => opt.letter === q.correctAnswer).text;
-                        
-                        div.innerHTML = `
-                            <p class="font-semibold text-gray-800">${q.number}. ${q.text}</p>
-                            <p class="text-sm text-red-600 mt-1">Your answer: ${yourAnswerText}</p>
-                            <p class="text-sm text-green-600 mt-1">Correct answer: ${correctAnswerText}</p>
-                        `;
-                        reviewList.appendChild(div);
-                    }
-                });
-
+                finalScoreDisplay.textContent = `${score} / ${questions.length}`;
+                scorePercentageDisplay.textContent = `Final Score: 100%`;
                 switchToView('results');
             }
             
+            downloadResultsBtn.addEventListener('click', () => {
+                let reportContent = `MCQ Quiz Summary - Final Score: ${score}/${questions.length}\n`;
+                reportContent += "========================================\n\n";
+                questions.forEach((q, index) => {
+                    const answer = userAnswers[index];
+                    const correctAnswerText = q.options.find(opt => opt.letter === q.correctAnswer).text;
+                    reportContent += `Q${q.number}: ${q.text}\n`;
+                    reportContent += `  - Correct Answer: ${correctAnswerText}\n`;
+                    reportContent += `  - Your Final Choice: ${answer ? q.options.find(opt => opt.letter === answer.selectedOption).text : 'N/A'}\n\n`;
+                });
+                const blob = new Blob([reportContent], { type: 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'mcq_quiz_summary.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            });
+            
             restartQuizBtn.addEventListener('click', () => {
-                resetQuizState();
                 resetUploadView();
                 switchToView('upload');
             });
             
-            downloadResultsBtn.addEventListener('click', () => {
-                let reportContent = "MCQ Quiz Results\n";
-                reportContent += "===================\n\n";
-                reportContent += `Final Score: ${score} / ${questions.length}\n`;
-                reportContent += `Percentage: ${((score / questions.length) * 100).toFixed(0)}%\n\n`;
-                reportContent += "Review of Incorrect Answers:\n";
-                reportContent += "----------------------------\n\n";
-
-                let incorrectCount = 0;
-                questions.forEach((q, index) => {
-                    const userAnswer = userAnswers[index];
-                     if (!userAnswer || !userAnswer.isCorrect) {
-                        incorrectCount++;
-                        const yourAnswerText = userAnswer ? q.options.find(opt => opt.letter === userAnswer.selectedOption).text : 'Not answered';
-                        const correctAnswerText = q.options.find(opt => opt.letter === q.correctAnswer).text;
-
-                        reportContent += `Question ${q.number}: ${q.text}\n`;
-                        reportContent += `  - Your Answer: ${yourAnswerText}\n`;
-                        reportContent += `  - Correct Answer: ${correctAnswerText}\n\n`;
-                    }
-                });
-
-                if (incorrectCount === 0) {
-                    reportContent += "Congratulations! You answered all questions correctly.\n";
-                }
-
-                const blob = new Blob([reportContent], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = 'mcq_quiz_results.txt';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
-            });
-            
             // --- General App Flow ---
-
             function switchToView(viewName) {
-                uploadView.classList.add('hidden');
-                quizView.classList.add('hidden');
-                resultsView.classList.add('hidden');
-
-                if (viewName === 'upload') uploadView.classList.remove('hidden');
-                if (viewName === 'quiz') quizView.classList.remove('hidden');
-                if (viewName === 'results') resultsView.classList.remove('hidden');
+                ['upload', 'quiz', 'results'].forEach(v => document.getElementById(`${v}-view`).classList.add('hidden'));
+                document.getElementById(`${viewName}-view`).classList.remove('hidden');
             }
             
             function resetQuizState() {
-                currentQuestionIndex = 0;
+                currentQuizSetIndices = [];
+                currentPointer = 0;
                 userAnswers = {};
                 score = 0;
+                round = 1;
+                quizRoundTitle.textContent = `Round 1`;
             }
             
             function resetUploadView() {
@@ -545,10 +549,7 @@
                  loadingSpinner.classList.add('hidden');
                  startQuizBtn.disabled = fileInput.files.length === 0;
             }
-
         });
     </script>
 </body>
 </html>
-
-
